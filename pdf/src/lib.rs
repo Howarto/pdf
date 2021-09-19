@@ -20,7 +20,7 @@ pub mod encoding;
 pub mod build;
 
 // mod content;
-mod enc;
+pub mod enc;
 pub mod crypt;
 
 // pub use content::*;
