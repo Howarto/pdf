@@ -12,15 +12,15 @@ use std::convert::TryInto;
 #[derive(Object, ObjectWrite, Debug, Clone)]
 pub struct LZWFlateParams {
     #[pdf(key="Predictor", default="1")]
-    predictor: i32,
+    pub predictor: i32,
     #[pdf(key="Colors", default="1")]
-    n_components: i32,
+    pub n_components: i32,
     #[pdf(key="BitsPerComponent", default="8")]
-    bits_per_component: i32,
+    pub bits_per_component: i32,
     #[pdf(key="Columns", default="1")]
-    columns: i32,
+    pub columns: i32,
     #[pdf(key="EarlyChange", default="1")]
-    early_change: i32,
+    pub early_change: i32,
 }
 impl Default for LZWFlateParams {
     fn default() -> LZWFlateParams {
@@ -96,7 +96,7 @@ impl StreamFilter {
            "CCITTFaxDecode" => StreamFilter::CCITTFaxDecode (CCITTFaxDecodeParams::from_primitive(params, r)?),
            "Crypt" => StreamFilter::Crypt,
            ty => bail!("Unrecognized filter type {:?}", ty),
-       } 
+       }
        )
     }
 }
@@ -158,7 +158,7 @@ fn word_85([a, b, c, d, e]: [u8; 5]) -> Option<[u8; 4]> {
 
 fn decode_85(data: &[u8]) -> Result<Vec<u8>> {
     let mut out = Vec::with_capacity((data.len() + 4) / 5 * 4);
-    
+
     let mut stream = data.iter().cloned()
         .filter(|&b| !matches!(b, b' ' | b'\n' | b'\r' | b'\t'));
 
@@ -210,7 +210,7 @@ fn base85_chunk(c: [u8; 4]) -> [u8; 5] {
     let (n, d) = divmod(n, 85);
     let (n, c) = divmod(n, 85);
     let (a, b) = divmod(n, 85);
-    
+
     [a85(a), a85(b), a85(c), a85(d), a85(e)]
 }
 
@@ -280,22 +280,22 @@ fn flate_decode(data: &[u8], params: &LZWFlateParams) -> Result<Vec<u8>> {
     if predictor > 10 {
         let inp = decoded; // input buffer
         let rows = inp.len() / (stride+1);
-        
+
         // output buffer
         let mut out = vec![0; rows * stride];
-    
+
         // Apply inverse predictor
         let null_vec = vec![0; stride];
-        
+
         let mut in_off = 0; // offset into input buffer
-        
+
         let mut out_off = 0; // offset into output buffer
         let mut last_out_off = 0; // last offset to output buffer
-        
+
         while in_off < inp.len() {
             let predictor = PredictorType::from_u8(inp[in_off])?;
             in_off += 1; // +1 because the first byte on each row is predictor
-            
+
             let row_in = &inp[in_off .. in_off + stride];
             let (prev_row, row_out) = if out_off == 0 {
                 (&null_vec[..], &mut out[out_off .. out_off+stride])
@@ -304,9 +304,9 @@ fn flate_decode(data: &[u8], params: &LZWFlateParams) -> Result<Vec<u8>> {
                 (&prev[last_out_off ..], &mut curr[.. stride])
             };
             unfilter(predictor, n_components, prev_row, row_in, row_out);
-            
+
             last_out_off = out_off;
-            
+
             in_off += stride;
             out_off += stride;
         }
@@ -410,7 +410,7 @@ pub enum PredictorType {
     Paeth = 4
 }
 
-impl PredictorType {  
+impl PredictorType {
     /// u8 -> Self. Temporary solution until Rust provides a canonical one.
     pub fn from_u8(n: u8) -> Result<PredictorType> {
         match n {
